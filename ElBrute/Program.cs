@@ -77,7 +77,6 @@ namespace ElBrute
             for (int i = 0; i < threads.Length; i++)
             {
                 threads[i] = new Thread(new ThreadStart(CheckProxy));
-                ThreadList.Add(threads[i]);
                 threads[i].Start();
 
                 Thread.Sleep(1000);
