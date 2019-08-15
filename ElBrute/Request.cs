@@ -11,7 +11,7 @@ namespace ElBrute
         public static List<string> GetProxy()
         {
             HttpRequest danni = ReqCharacters.Req();
-            string response = danni.Get("https://api.getproxylist.com/proxy?apiKey=567482b9d011d93c0001203c5006ad752d5972b5&protocol=http&all=1").ToString();
+            string response = danni.Get("URL").ToString();
 
             List<string> proxyList = new List<string>();
             var proxy = JsonConvert.DeserializeObject<Dictionary<string, ResponseIP>>(response);
