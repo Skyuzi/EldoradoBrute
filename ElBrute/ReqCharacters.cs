@@ -28,7 +28,6 @@ namespace ElBrute
             request.Cookies = cookies;
             request.IgnoreProtocolErrors = true;
 
-
             return request;
         }
 
@@ -38,7 +37,6 @@ namespace ElBrute
             request.KeepAlive = true;
             request.UserAgent = UserAgent;
             request.Cookies = cookies;
-            request.ConnectTimeout = 10000;
             request.Proxy = ProxyClient.Parse(ProxyType.Http, proxy);
             request.IgnoreProtocolErrors = true;
 

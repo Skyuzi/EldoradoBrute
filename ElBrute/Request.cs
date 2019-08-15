@@ -11,25 +11,16 @@ namespace ElBrute
         public static List<string> GetProxy()
         {
             HttpRequest danni = ReqCharacters.Req();
-            string response = danni.Get("URL").ToString();
+            string response = danni.Get("https://api.getproxylist.com/proxy?apiKey=567482b9d011d93c0001203c5006ad752d5972b5&protocol=http&all=1").ToString();
 
             List<string> proxyList = new List<string>();
             var proxy = JsonConvert.DeserializeObject<Dictionary<string, ResponseIP>>(response);
 
-            for (int i = 2; i < proxy.Count; i++)
+            int countProxy = proxy.Count - 1;
+
+            for (int i = 2; i < countProxy; i++)
             {
-                try
-                {
-                    string str = proxy[string.Format("{0}", i)].connectTime;
-                    string[] time = str.Split('.');
-
-                    if (Convert.ToInt32(time[0]) > 1)
-                        continue;
-
-                    proxyList.Add(proxy[string.Format("{0}", i)].ip + ":" + proxy[string.Format("{0}", i)].port);
-
-                }
-                catch { break; }
+                proxyList.Add(proxy[$"{i}"].ip + ":" + proxy[$"{i}"].port);
             }
 
             return proxyList;
@@ -57,8 +48,9 @@ namespace ElBrute
             try
             {
                 HttpRequest danni = ReqCharacters.Req(characters.cookies, characters.proxy);
-                danni.ConnectTimeout = 3000;
-                string response = danni.Get(url, null).ToString();
+                danni.IgnoreProtocolErrors = false;
+                danni.Proxy.ConnectTimeout = 3000;
+                string response = danni.Get(url).ToString();
                 result = response;
             }
             catch {result = "Bad";}
